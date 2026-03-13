@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useAuth } from "@/context/AuthContext"
 
@@ -35,7 +35,6 @@ const COUPONS: Record<string, { discount: number; plans: PlanId[] }> = {
 
 const SEATS = { starter: 47, pro: 12, elite: 5 }
 
-// 24-hour countdown — fixed end time stored in sessionStorage so it persists on refresh
 function use24hTimer() {
   const [timeLeft, setTimeLeft] = useState({ h: 23, m: 59, s: 59 })
 
@@ -61,7 +60,8 @@ function use24hTimer() {
   return timeLeft
 }
 
-export default function SignupPage() {
+// ── Inner component that uses useSearchParams ──────────────────────────────
+function SignupInner() {
   const { signUp } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -141,7 +141,6 @@ export default function SignupPage() {
 
     html, body { height: 100%; background: #f8f9fe; }
 
-    /* ── URGENCY BAR ── */
     .urgency-bar {
       position: fixed; top: 0; left: 0; right: 0; z-index: 200;
       background: linear-gradient(90deg, #1e3a8a, #2563eb);
@@ -157,12 +156,11 @@ export default function SignupPage() {
     }
     .ub-code { color: #fde68a; font-weight: 800; }
 
-    /* ── PAGE ── */
     .page {
       min-height: 100vh;
       padding-top: 38px;
       display: grid;
-      grid-template-columns: 3fr 2fr;   /* form bigger, pricing smaller */
+      grid-template-columns: 3fr 2fr;
       font-family: 'DM Sans', sans-serif;
       color: #0f1733;
     }
@@ -171,7 +169,6 @@ export default function SignupPage() {
       .pricing-col { order: -1; }
     }
 
-    /* ══ LEFT — FORM ══ */
     .form-col {
       background: #fff;
       border-right: 1px solid #e2e6f3;
@@ -183,7 +180,6 @@ export default function SignupPage() {
 
     .form-inner { max-width: 500px; width: 100%; margin: 0 auto; animation: fadeUp .4s ease; }
 
-    /* NAV ROW */
     .form-nav {
       display: flex; align-items: center; justify-content: space-between;
       margin-bottom: 36px;
@@ -208,7 +204,6 @@ export default function SignupPage() {
     }
     .home-link:hover { color: #2563eb; }
 
-    /* HEADING */
     .form-eyebrow {
       font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500;
       text-transform: uppercase; letter-spacing: 2.5px; color: #2563eb; margin-bottom: 8px;
@@ -225,7 +220,6 @@ export default function SignupPage() {
     }
     .form-sub-link:hover { color: #1d4ed8; }
 
-    /* ACTIVE PLAN PILL */
     .active-plan-pill {
       display: flex; align-items: center; justify-content: space-between;
       background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 12px;
@@ -240,7 +234,6 @@ export default function SignupPage() {
     .app-price { font-family: 'DM Mono', monospace; font-size: 18px; font-weight: 400; color: #2563eb; letter-spacing: -0.5px; }
     .app-change { font-size: 11px; color: #60a5fa; font-weight: 600; margin-left: 4px; }
 
-    /* FIELDS */
     .field { margin-bottom: 14px; }
     .field-label {
       font-family: 'DM Mono', monospace; font-size: 10.5px; font-weight: 500;
@@ -270,7 +263,6 @@ export default function SignupPage() {
     .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     @media(max-width:520px) { .field-row { grid-template-columns: 1fr; } }
 
-    /* COUPON */
     .coupon-wrap {
       background: #f7f8fc; border: 1px solid #e2e6f3;
       border-radius: 12px; padding: 14px 16px; margin-bottom: 18px;
@@ -306,11 +298,9 @@ export default function SignupPage() {
     .coupon-remove:hover { color: #dc2626; }
     .coupon-locked { font-size: 12px; color: #8892b8; font-style: italic; }
 
-    /* ERRORS / SUCCESS */
     .error-box { background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 12px 15px; font-size: 13.5px; color: #dc2626; margin-bottom: 16px; line-height: 1.5; }
     .success-box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 12px 15px; font-size: 13.5px; color: #2563eb; margin-bottom: 16px; line-height: 1.5; }
 
-    /* SUBMIT — BIG */
     .submit-btn {
       width: 100%;
       background: linear-gradient(135deg, #1d4ed8, #3b82f6);
@@ -330,7 +320,6 @@ export default function SignupPage() {
     .terms { font-size: 11.5px; color: #8892b8; text-align: center; line-height: 1.65; margin-top: 14px; }
     .signin-prompt { text-align: center; font-size: 13px; color: #4a5580; margin-top: 12px; }
 
-    /* ══ RIGHT — PRICING ══ */
     .pricing-col {
       background: #f8f9fe;
       padding: 52px 32px 72px;
@@ -352,7 +341,6 @@ export default function SignupPage() {
     }
     .pc-title em { font-style: italic; color: #2563eb; }
 
-    /* OFFER CHIP */
     .offer-chip {
       display: flex; align-items: center; gap: 8px;
       background: linear-gradient(90deg, #fef3c7, #fde68a);
@@ -362,7 +350,6 @@ export default function SignupPage() {
     .oc-text { font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700; color: #92400e; }
     .oc-timer { font-family: 'DM Mono', monospace; font-size: 12px; color: #b45309; letter-spacing: .5px; }
 
-    /* PLAN CARDS — compact */
     .plan-cards { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
 
     .plan-card {
@@ -409,18 +396,15 @@ export default function SignupPage() {
     .card-price.col-pro   { color: #2563eb; }
     .card-price.col-elite { color: #7c3aed; }
 
-    /* SEATS */
     .card-seats { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
     .seats-bg { flex: 1; height: 3px; background: #e2e6f3; border-radius: 2px; overflow: hidden; }
     .seats-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, #f59e0b, #ef4444); }
     .seats-txt { font-size: 10.5px; font-weight: 700; color: #ef4444; font-family: 'DM Mono', monospace; white-space: nowrap; }
 
-    /* FEATS */
     .card-feats { display: flex; flex-wrap: wrap; gap: 4px; padding-top: 8px; border-top: 1px solid #f0f2fa; }
     .card-feat  { font-size: 11px; color: #4a5580; display: flex; align-items: center; gap: 3px; }
     .feat-ck    { color: #2563eb; font-size: 10px; }
 
-    /* TRUST */
     .trust-row { display: flex; gap: 6px; flex-wrap: wrap; }
     .trust-badge {
       display: flex; align-items: center; gap: 4px;
@@ -444,11 +428,10 @@ export default function SignupPage() {
 
       <div className="page">
 
-        {/* ══ LEFT — FORM ══════════════════════════════════════════════════ */}
+        {/* ══ LEFT — FORM ══ */}
         <div className="form-col">
           <div className="form-inner">
 
-            {/* NAV ROW */}
             <div className="form-nav">
               <button className="brand-btn" onClick={() => router.push("/")}>
                 <div className="brand-logo">J</div>
@@ -464,7 +447,6 @@ export default function SignupPage() {
               <button className="form-sub-link" onClick={() => router.push("/login")}>Sign in →</button>
             </div>
 
-            {/* Active plan pill */}
             <div className="active-plan-pill" onClick={() => document.getElementById("pricing-col")?.scrollIntoView({ behavior: "smooth" })}>
               <div className="app-left">
                 <span className="app-dot" />
@@ -480,14 +462,12 @@ export default function SignupPage() {
             {error   && <div className="error-box">⚠ {error}</div>}
             {success && <div className="success-box">✓ {success}</div>}
 
-            {/* FULL NAME */}
             <div className="field">
               <label className="field-label">Full Name <span className="field-req">*</span></label>
               <input className="field-input" type="text" placeholder="Arjun Sharma"
                 value={fullName} onChange={e => setFullName(e.target.value)} />
             </div>
 
-            {/* EMAIL ROW */}
             <div className="field-row">
               <div className="field">
                 <label className="field-label">Email <span className="field-req">*</span></label>
@@ -501,7 +481,6 @@ export default function SignupPage() {
               </div>
             </div>
 
-            {/* MOBILE + PASSWORD */}
             <div className="field-row">
               <div className="field">
                 <label className="field-label">Mobile <span className="field-req">*</span></label>
@@ -523,7 +502,6 @@ export default function SignupPage() {
               </div>
             </div>
 
-            {/* COUPON */}
             <div className="coupon-wrap">
               <div className="coupon-label">🏷 Coupon Code</div>
               {!plan.couponEligible ? (
@@ -547,7 +525,6 @@ export default function SignupPage() {
               )}
             </div>
 
-            {/* BIG SUBMIT */}
             <button className="submit-btn" onClick={handleSubmit} disabled={loading}>
               {loading ? (
                 <><div className="spinner" /> Creating your account…</>
@@ -571,7 +548,7 @@ export default function SignupPage() {
           </div>
         </div>
 
-        {/* ══ RIGHT — PRICING ══════════════════════════════════════════════ */}
+        {/* ══ RIGHT — PRICING ══ */}
         <div className="pricing-col" id="pricing-col">
 
           <div className="pc-eyebrow">Choose your plan</div>
@@ -649,5 +626,21 @@ export default function SignupPage() {
         </div>
       </div>
     </>
+  )
+}
+
+// ── Default export wraps inner component in Suspense ──────────────────────
+export default function SignupPage() {
+  return (
+    <Suspense fallback={
+      <div style={{
+        minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
+        fontFamily: "sans-serif", color: "#4a5580", fontSize: 14
+      }}>
+        Loading…
+      </div>
+    }>
+      <SignupInner />
+    </Suspense>
   )
 }
